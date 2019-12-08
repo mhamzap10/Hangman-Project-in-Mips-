@@ -35,3 +35,13 @@ main:
 	li	$a2, 0
 	syscall
 	#########################################
+	
+	move	$s6, $v0	#save the file descriptor
+
+	#now read the file just opened and store all of its content into buffer
+
+	li	$v0, 14
+	move	$a0, $s6
+	la	$a1, buffer
+	li	$a2, 1024
+	syscall
