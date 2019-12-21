@@ -124,3 +124,136 @@ recur:
 		exitA:
 		li $t1, 0x0
 		sb $t1, 0($t0)
+			####################################################################################		
+	#print initial blank guessed string
+	li $v0, 55
+	la $a0, guessedString
+	li $a1, 1
+	syscall
+
+	
+	li $s5, 0	#initializing error count
+	# Loop used for asking a character from user, displaying current status of string, call Hangman Draw function
+	mainLoop:
+		#if (errorcount == MAX) --> exit mainLoop
+		beq $s5, 9, exitMainLoop	#$t7 acts as error count 
+
+		############ Counting the number of remaining '_' in guessedString ###################
+		la $t0, guessedString
+		li $t1, 0
+		li $s4, 0x5f
+		
+		loopx:
+		lb $t2, 0($t0)
+		beqz $t2, exitLoopx
+		addi $t0, $t0, 1
+		bne $t2, $s4, loopx
+		addi $t1, $t1, 1
+		j loopx
+		exitLoopx:
+
+		beqz $t1, exitMainLoop
+		########################################################################################
+		jal promptChar
+		move $t0, $v0	#$t0 contains the character read
+
+		la $t4, matchPositions
+		li $t5, 1
+		#so let's just first calculate the length of testWord
+		la $t1, testWord
+		li $t3, 0	#used in set mark in 'matchPositions'
+		#move $a3, $t1
+		#jal strlen
+		#move $t2, $v0	#now $t2 contains length of testWord
+		
+		#this loop will check if this char($t0) is part of correct answer/string
+		li $t6, 0	
+		shortLoop:
+			lb $t2, 0($t1)		# Load the first byte from address in $t1(testWord)
+			beqz $t2, endl		#done with checking this input character, now accept another character from user (i.e. go to mainLoop again)
+			bne $t2, $t0, nextShortLoop
+			sb $t5, 0($t4)			#if character match than set mark in 'matchPositions'
+			
+			############ call matchSound
+			jal matchSound
+			############################ 
+			li $t6, 1			#used as flag to check
+		
+		nextShortLoop:
+			addi $t1, $t1, 1	# else increment the address  
+			#add $t3, $t3, 1
+			add $t4, $t4, 1		#increment mark for matchpositions
+			j shortLoop
+		
+			
+		endl:			#it's done with checking this particular char and have set 'matchPositions' array also
+			beqz $t6, errCount 		# if($t6==0)--> $t7++
+			j noError
+			errCount:
+			addi $s5, $s5, 1	#error count is stored in $s5
+			move $a0, $s5		#passing this error count argument in drawHAngman subroutine
+			jal drawHangman
+				beq $s5, 9, hangPrompt1
+			
+			
+			noError:
+			move $a0, $t0
+			jal setChar	#now call setChar function for putting this character in 'guessedWord' at positions specified in matchPositions
+	
+		jal printGuessedString	
+		j mainLoop
+		
+			hangPrompt1:
+				li $v0, 55
+				la $a0, hangPrompt
+				li $a1, 0
+				syscall
+			###############################################
+	li $v0, 59
+	la $a0, correctMsg
+	la $a1, testWord
+	syscall
+	###############################################
+
+								
+				
+		exitMainLoop:
+		blt $s5, 9, success
+		j main_exit
+		
+		success:
+		
+			##play success sound
+			li $v0, 33
+			li $a0, 60	# pitch, C#
+			li $a1, 2000	#duration in milisecond
+			li $a2, 119	#instrument (0 - 7 piano)
+			li $a3, 300	#volume
+			syscall		
+			
+			##display success sound
+			##display succcess message
+			li $v0, 55
+			la $a0,  successPrompt
+			li $a1, 1
+			syscall
+
+			
+	## DEBUGGUING PURPOSE ##
+	#li $v0, 55
+	#li $a1, 1
+	#la $a0, guessedString
+	#syscall
+	
+	#li $v0, 55
+	#li $a1, 1
+	#la $a0, testWord
+	#syscall
+	########################
+
+	#jal drawHangman
+
+	main_exit:
+	li	$v0, 10
+	syscall
+######################################### MAIN ENDS ############################################
