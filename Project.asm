@@ -257,6 +257,187 @@ recur:
 	li	$v0, 10
 	syscall
 ######################################### MAIN ENDS ############################################
+
+
+###### THIS FUNCTION GENERATES A RANDOM NUMBER AND RETURNS IT IN $a0 
+randomGenerator:
+	#$s7 contains the length of buffer - 10, Hence this function generates a random number used in selecting a state form buffer strinf
+	move $a1, $s7	#Range set from 0-44 in this case (total characters in buffer are 55 so it will generate random # from 0 to 44)
+	li $v0, 42	#generates random number and put it in $a0
+	syscall
+	jr $ra
+#####################################################################
+
+
+###### THIS FUNCTION IS FOR STORING A RANDOM SELECTED WORD FROM BUFFER INTO TESTWORD
+storeWord:
+	la $t1, testWord
+	addi $t0, $t0, 1
+	whileSW:
+	lb $t2, 0($t0)
+	beq $t2, 0x2a, exitStoreWord	#exit if reaches to the end of current word
+	beqz $t2, exitStoreWord		#eit of reached end of buffer string
+	sb $t2, 0($t1)
+	addi $t0, $t0, 1
+	addi $t1, $t1, 1
+	j whileSW
+	
+	exitStoreWord:
+	li $t3, 0x00
+	sb $t3, 0($t1)
+	jr $ra
+####################################################################################
+	
+
+###### THIS FUNCTION CALCULATES THE STRING LENGTH OF TESTWORD AND RETURNS IT IN $v0
+## Argument passed $a3, contains address of the string whose length is to calculate
+## Return value $v0, length of string
+strlen:
+	li $v0, 0
+	loopStrLen:
+	lb $t2, 0($a3)  # Load the first byte from address in $t0  
+	beqz $t2, endStrlen   # if $t2 == 0 then go to label end  
+	addi $a3, $a3, 1      # else increment the address  
+	addi $v0, $v0, 1 # and increment the counter of course  
+	j loopStrLen      # finally loop  
+
+	endStrlen:
+	jr $ra  
+###################################################################################
+
+
+###### THIS FUNCTION USED TO TAKE INPUR FROM THE USER #############################
+## return value, read character in $v0
+promptChar:
+	la $t3, charInputHistory	
+	move $a3, $t3			#going to call strlen, so storing address of string in $a3(argument for strlen function)
+	addi $sp, $sp, -4		#storing current $ra (i.e some line # of main), on stack
+	sw $ra, 0($sp)			#because going to call strlen, that will overwrite $ra
+	
+	jal strlen			#this will return the length of charInputHistory string into $v0
+	move $t0, $v0			#$t0 has length of charInputHistory
+	
+	promptCharLoop:			#if the char has already been input (present in history) then come here again
+		li $v0, 54
+		la $a0, charInputPrompt
+		la $a1, charInput
+		li $a2, 2
+		syscall
+		
+		la $t1, charInput
+		lb $t2, 0($t1)		#now $t2 has the user input character
+		#there is nothing in charInputHistory array	
+		beqz $t0, checkHistoryLoopExit
+		
+		#check whether $t2 has previously been inputed by running a loop on charInputHistory, $t0 times
+		checkHistoryLoop:
+			lb $t4, 0($t3)
+			beqz $t4, checkHistoryLoopExit	#have reached end of 'charInputHistory' string
+			beq $t4, $t2, promptCharLoop	#means user has previously inputed the same char and hence need to input again
+			addi $t3, $t3, 1
+			j checkHistoryLoop
+			
+			
+	checkHistoryLoopExit:
+#	addi $t3, $t3, 1	#store the new input in charInputHistory char array
+	sb $t2, 0($t3)
+	
+	lw $ra, 0($sp)			#restoring $ra from stack to get back to somewhere in main
+	addi $sp, $sp, 4
+	move $v0, $t2			#returns the read char in $v0
+	jr $ra
+###################################################################################
+
+
+###################################################################################
+#This function is used to set matched character into 'guessedString' buffer,
+# The character read is passed in $a0
+###################################################################################
+setChar:
+	move $t4, $a0
+	la $t0, matchPositions
+	la $t1, guessedString
+	li $t2, 0
+	la $a3, testWord	#$a3 is passed argument in strlen function
+	
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	jal strlen	#it returned testWord string length in $v0
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	move $t3, $v0	#saving the returned length of string into $t3
+	
+	whileB:
+		beq $t2, $t3, exitB	#$t2 is counter that increments by 1 everytime loop runs
+		lb $t5, 0($t0)			#if()
+		lb $t6, 0($t1)		#read char from guessedString, and only insert if read char($t6) is '_' 
+		beqz $t5, dontSet
+		beq $t6, 0x5f, set
+		j dontSet
+		
+		set:
+		sb $t4, 0($t1)
+		
+		dontSet:
+		addi $t0, $t0, 1	#increment address pointer by 1
+		addi $t1, $t1, 2
+		#sb $t3, 0($t0)		#store a space in gussedString
+		#addi $t0, $t0, 1	#increment address pointer by 1
+		addi $t2, $t2, 1	#increment the counter used for iterating the loop
+		j whileB
+		
+	exitB:
+	
+	jr $ra
+
+###################################################################
+############################# SOUNDS ##############################
+###################################################################
+matchSound:
+li $v0, 33
+li $a0, 60	# pitch, C#
+li $a1, 700	#duration in milisecond
+li $a2, 124	#instrument (0 - 7 piano)
+li $a3, 60	#volume
+syscall
+jr $ra
+
+###################################################################
+########################### HANGMAN ###############################
+###################################################################
+
+drawHangman:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	move $s2, $a0		#error number is saved in ragister $s2 now
+	
+	################################################
+	############### MISMATCH SOUND #################
+	li $v0, 33
+	li $a0, 60	# pitch, C#
+	li $a1, 600	#duration in milisecond
+	li $a2, 111	#instrument (0 - 7 piano)
+	li $a3, 100	#volume
+	syscall
+	###############################################
+	
+	beq $s2, 0, hangmanExit
+	beq $s2, 1, drawWalls
+	beq $s2, 2, drawRope
+	beq $s2, 3, drawFace
+	beq $s2, 4, drawBody
+	beq $s2, 5, drawLeftHand
+	beq $s2, 6, drawRightHand
+	beq $s2, 7, drawLeftLeg
+	beq $s2, 8, drawRightLeg
+	beq $s2, 9, hangmanDies
+	
+		#li	$t9, 0x00FFFFFF		# Colour - White
+		#li	$t9, 0x00FF00FF		# Colour - Blue		
+		
+
+
 ##################### STEP 1 starts #########################
 drawWalls:
 		li	$t9, 0x00FFFF00		#yellow
