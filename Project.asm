@@ -350,3 +350,87 @@ promptChar:
 
 
 ###################################################################################
+setChar:
+	move $t4, $a0
+	la $t0, matchPositions
+	la $t1, guessedString
+	li $t2, 0
+	la $a3, testWord	#$a3 is passed argument in strlen function
+	
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	jal strlen	#it returned testWord string length in $v0
+	
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	move $t3, $v0	#saving the returned length of string into $t3
+	
+	whileB:
+		beq $t2, $t3, exitB	#$t2 is counter that increments by 1 everytime loop runs
+		lb $t5, 0($t0)			#if()
+		lb $t6, 0($t1)		#read char from guessedString, and only insert if read char($t6) is '_' 
+		beqz $t5, dontSet
+		beq $t6, 0x5f, set
+		j dontSet
+		
+		set:
+		sb $t4, 0($t1)
+		
+		dontSet:
+		addi $t0, $t0, 1	#increment address pointer by 1
+		addi $t1, $t1, 2
+		#sb $t3, 0($t0)		#store a space in gussedString
+		#addi $t0, $t0, 1	#increment address pointer by 1
+		addi $t2, $t2, 1	#increment the counter used for iterating the loop
+		j whileB
+		
+	exitB:
+	
+	jr $ra
+
+###################################################################
+############################# SOUNDS ##############################
+###################################################################
+matchSound:
+li $v0, 33
+li $a0, 60	# pitch, C#
+li $a1, 700	#duration in milisecond
+li $a2, 124	#instrument (0 - 7 piano)
+li $a3, 60	#volume
+syscall
+jr $ra
+
+###################################################################
+########################### HANGMAN ###############################
+###################################################################
+
+drawHangman:
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	move $s2, $a0		#error number is saved in ragister $s2 now
+	
+	################################################
+	############### MISMATCH SOUND #################
+	li $v0, 33
+	li $a0, 60	# pitch, C#
+	li $a1, 600	#duration in milisecond
+	li $a2, 111	#instrument (0 - 7 piano)
+	li $a3, 100	#volume
+	syscall
+	###############################################
+	
+	beq $s2, 0, hangmanExit
+	beq $s2, 1, drawWalls
+	beq $s2, 2, drawRope
+	beq $s2, 3, drawFace
+	beq $s2, 4, drawBody
+	beq $s2, 5, drawLeftHand
+	beq $s2, 6, drawRightHand
+	beq $s2, 7, drawLeftLeg
+	beq $s2, 8, drawRightLeg
+	beq $s2, 9, hangmanDies
+	
+		#li	$t9, 0x00FFFFFF		# Colour - White
+		#li	$t9, 0x00FF00FF		# Colour - Blue		
+		
+
