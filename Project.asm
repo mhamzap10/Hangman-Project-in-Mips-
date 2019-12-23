@@ -628,3 +628,569 @@ drawRightLeg:
 		jal drawLine																						
 j hangmanExit
 #########################################################STEP 8 ENDS
+####################### Hangman gonnna die ###################################
+	#HANGMAN Dies
+hangmanDies:
+
+	###############################################
+		li $v0, 33
+	li $a0, 60	# pitch, C#
+	li $a1, 2000	#duration in milisecond
+	li $a2, 111	#instrument (0 - 7 piano)
+	li $a3, 100	#volume
+	syscall
+	###############################################
+	
+		#leftbigeye
+		#li	$t9, 0x00FF00FF		# Colour - Blue
+		li	$a0, 91			
+		li	$a1, 75			
+		li	$a3, 3			#radius
+		jal	drawCircle			
+		nop				
+		nop
+	#rightbigeye
+		li	$a0, 105			
+		li	$a1, 65			
+		li	$a3, 3			#radius
+		jal	drawCircle			
+		nop				
+		nop
+	#toung comesout
+		li	$a0, 100
+		li	$a1, 88
+		li	$a2, 112
+		li	$a3, 77
+		jal	drawLine
+############################################################################
+	hangmanExit:
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	jr $ra
+#						
+#						
+#						
+#						
+#	#	Function that will colour in a pixel from the X and Y coor and the colour asked		
+	setPixel:					
+		li 	$t3, 0x10000000		#loading first pixel into a temp registar, using the data segament	
+		#li 	$t3, 0x10010000				
+		sll 	$t0, $a1, 9		#Multiply the Y coord. by 512 (means $a1 has Y coordinate)	
+		addu 	$t1, $t0, $a0		#Add X and Y together	(means $a0 has X coordinate)
+		sll 	$t1, $t1, 2		#Multiply the X+Y by 4!
+		#srl 	$t1, $t1, 2	
+		addu 	$t2, $t3, $t1		#Add to the first pixel	
+		sw 	$a2, ($t2)		#Display Pixel	
+						
+		jr 	$ra			# Jump back to main()
+		nop				
+#						
+#						
+#						
+#						
+#	#	DrawLine function, will draw a line on two points.				
+	drawLine:					
+		addiu	$sp, $sp, -24		# save all the s values	
+		sw	$s0, 20($sp)			
+		sw	$s1, 16($sp)			
+		sw	$s2, 12($sp)			
+		sw	$s3, 8($sp)			
+		sw	$s4, 4($sp)			
+		sw	$ra, ($sp)			
+						
+		subu 	$s0, $a2, $a0		#Subtract X1 - x0 and storing it in dx	
+		abs	$s0, $s0		#ABS dx	
+						
+		subu 	$s1, $a3, $a1		#subtract y1 - y0	
+		abs 	$s1, $s1		#storing dy	
+						
+		sub 	$s4, $s0, $s1		#making err	
+						
+		blt 	$a0, $a2, settingSX	#check for SX		
+		nop				
+						
+		li 	$s2, -1			#not greater, my SX  -1
+						
+		j 	checkSY			#check SY
+		nop				
+						
+	checkSY:					
+		blt 	$a1, $a3, settingSY	#if less then, set SY 1		
+		nop				
+		li 	$s3, -1			#if not, set -1
+		j 	loop			#jump to loop
+		nop				
+						
+	settingSX:					
+		li 	$s2, 1			#setting SX 1
+		j 	checkSY			#check sy now
+		nop				
+						
+	settingSY:					
+		li 	$s3, 1			#set sy to 1
+		j 	loop			
+		nop				
+						
+	loop:					
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+						
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+						
+		jal	setPixel			
+		nop				
+		nop				
+						
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16 			
+						
+		bne	$a0, $a2, keepGoing	#if x0 != x1 then keep going, carry on with the loop		
+		nop				
+		bne	$a1, $a3, keepGoing	# if y0 != y1 then keep going, carry on with the loop		
+		nop				
+						
+		lw	$ra, ($sp)			
+		lw	$s4, 4($sp)			
+		lw	$s3, 8($sp)			
+		lw	$s2, 12($sp)			
+		lw	$s1, 16($sp)			
+		lw	$s0, 20($sp)			
+		addiu	$sp, $sp, 24			
+						
+		jr	$ra			# return back to main
+		nop				
+						
+	keepGoing:					
+		mul	$t0, $s4, 2		#times err by 2 to make e2	
+						
+		subu 	$s1, $zero, $s1		# make dy negative by taking it away from ZERO	
+						
+		bgt 	$t0, $s1, loopOne	# if e2 > -dy do this loop		
+		nop				
+		blt 	$t0, $s0, loopTwo	# if e2 < dx then do this loop		
+		nop				
+						
+												
+		j	loop			# go back to the top
+		nop				
+						
+	loopOne:					
+		addu	$s4, $s4, $s1		# err = err - dy	
+		addu	$a0, $a0, $s2		# x0 = x0 + sx	
+		j	loop			# back to loop
+		nop				
+	loopTwo:					
+		addu	$s4, $s4, $s0		# err = err + dx	
+		addu	$a1, $a1, $s3		# y0 = y0 + sy	
+		j	loop			# back to loop
+		nop				
+					
+	#	To make a dashed Line instead of a solid one				
+	dashLine:					
+		addiu	$sp, $sp, -24		# save all the s values	
+		sw	$s0, 20($sp)			
+		sw	$s1, 16($sp)			
+		sw	$s2, 12($sp)			
+		sw	$s3, 8($sp)			
+		sw	$s4, 4($sp)			
+		sw	$ra, ($sp)			
+						
+		li 	$t8, 0			# Set the dash counter
+		li	$t7, 0			
+						
+		subu 	$s0, $a2, $a0		#Subtract X1 - x0 and storing it in dx	
+		abs	$s0, $s0		#ABS dx	
+						
+		subu 	$s1, $a3, $a1		#subtract y1 - y0	
+		abs 	$s1, $s1		#storing dy	
+						
+		sub 	$s4, $s0, $s1		#making err	
+						
+		blt 	$a0, $a2, dashSetSX	#check for SX		
+		nop				
+						
+		li 	$s2, -1			#not greater, my SX  -1
+						
+		j 	dashSY			#check SY
+		nop				
+						
+	dashSY:					
+		blt 	$a1, $a3, dashSetSY	#if less then, set SY 1		
+		nop				
+		li 	$s3, -1			#if not, set -1
+		j 	dashLoop			#jump to loop
+		nop				
+						
+	dashSetSX:					
+		li 	$s2, 1			#setting SX 1
+		j 	dashSY			#check sy now
+		nop				
+						
+	dashSetSY:					
+		li 	$s3, 1			#set sy to 1
+		j 	dashLoop			
+		nop				
+						
+	dashLoop:					
+						
+		add	$t8, $t8, 1			# Add one to the dash counter
+						
+		bge 	$t8, 2, checkDashCounter	# If the counter is set to 2 then skip this set pixel		
+		nop				
+						
+						
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+						
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+						
+		jal	setPixel			
+		nop				
+		nop				
+						
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16 			
+						
+		j 	dashMainLoopTwo			
+		nop				
+						
+	checkDashCounter:					
+		li	$t7, 1			# Set the second counter to 1 
+						
+		beq	$t8, 4, setDashCounter	# if the dash counter reaches N then set it back to zero.		
+		nop				
+						
+		j	dashMainLoopTwo			
+		nop				
+						
+	setDashCounter:					
+		li	$t8, 0			
+		j	dashMainLoopTwo			
+		nop				
+						
+	dashMainLoopTwo:					
+						
+		bne	$a0, $a2, dashKeepGoing	#if x0 != x1 then keep going, carry on with the loop		
+		nop				
+		bne	$a1, $a3, dashKeepGoing	# if y0 != y1 then keep going, carry on with the loop		
+		nop				
+						
+		lw	$ra, ($sp)			
+		lw	$s4, 4($sp)			
+		lw	$s3, 8($sp)			
+		lw	$s2, 12($sp)			
+		lw	$s1, 16($sp)			
+		lw	$s0, 20($sp)			
+		addiu	$sp, $sp, 24			
+						
+		jr	$ra			# return back to main
+		nop				
+						
+	dashKeepGoing:					
+		mul	$t0, $s4, 2		#times err by 2 to make e2	
+						
+		subu 	$s1, $zero, $s1		# make dy negative by taking it away from ZERO	
+						
+		bgt 	$t0, $s1, dashLoopOne	# if e2 > -dy do this loop		
+		nop				
+		blt 	$t0, $s0, dashLoopTwo	# if e2 < dx then do this loop		
+		nop				
+						
+						
+						
+		j	dashLoop			# go back to the top
+		nop				
+						
+	dashLoopOne:					
+		addu	$s4, $s4, $s1		# err = err - dy	
+		addu	$a0, $a0, $s2		# x0 = x0 + sx	
+		j	dashLoop			# back to loop
+		nop				
+	dashLoopTwo:					
+		addu	$s4, $s4, $s0		# err = err + dx	
+		addu	$a1, $a1, $s3		# y0 = y0 + sy	
+		j	dashLoop			# back to loop
+		nop				
+						
+#						
+#	#	Function that will draw a circle, taking in x, y, radius and a colour				
+	drawCircle:					
+		addiu	$sp, $sp, -4			
+		sw	$ra, ($sp)			
+						
+		li	$t0, 1			#storing 1 so it can be used
+						
+		sub	$s0, $t0, $a3		#setting F	
+						
+		li	$s1, 1			#setting ddF_X
+		mul	$s2, $a3, -2		#setting ddF_y	
+						
+		li	$s3, 0			#setting X (not x0)
+		move	$s4, $a3		#setting Y (not y0)	
+						
+		#	setPixel(x0, y0 + radius);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		add	$a1, $a1, $a3		# y0 + radius	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16 			
+						
+		#	setPixel(x0, y0 - radius);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		sub	$a1, $a1, $a3		# y0 - radius	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16			
+						
+		#	setPixel(x0 + radius, y0);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)				
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		add	$a0, $a0, $a3		# x0 + radius	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16			
+#						
+		#	setPixel(x0 - radius, y0);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		sub	$a0, $a0, $a3		# x0 - radius	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16			
+						
+		j	circleLoop		# jump to the circle loop	
+		nop				
+						
+	circleLoop:					
+		blt	$s3, $s4, keepGoingCircle	# if x < y then keep going ...		
+		nop				
+						
+		lw	$ra, ($sp)			# if NOT then load ra and go back to main
+		addiu	$sp, $sp, 4			
+						
+		jr	$ra			
+		nop				
+						
+	keepGoingCircle:					
+		bgez	$s0, circleFLoop		# if f >= 0)	
+		nop				
+						
+		j	circleMainLoop			# if not, carry onto main drawing loop 
+		nop				
+						
+	circleFLoop:					# if statement
+		sub	$s4, $s4, 1			# y--
+		add	$s2, $s2, 2			# ddf_y +=2
+		add	$s0, $s0, $s2			# f+= ddf_y
+						
+		j	circleMainLoop			# go to main drawing loop
+		nop				
+						
+	circleMainLoop:					
+		add	$s3, $s3, 1		#x++;	
+		add	$s1, $s1, 2		#ddF_x += 2;	
+		add	$s0, $s0, $s1		#f += ddF_x;	
+						
+		#	setPixel(x0 + x, y0 + y);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		add	$a0, $a0, $s3		# x0 + x	
+		add	$a1, $a1, $s4		# y0 + y	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16			
+						
+		#	setPixel(x0 - x, y0 + y);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		sub	$a0, $a0, $s3		# x0 - x	
+		add	$a1, $a1, $s4		# y0 + y	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16			
+						
+		#	setPixel(x0 + x, y0 - y);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		add	$a0, $a0, $s3		# x0 + x	
+		sub	$a1, $a1, $s4		# y0 - y	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16			
+						
+		#	setPixel(x0 - x, y0 - y);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		sub	$a0, $a0, $s3		# x0 - x	
+		sub	$a1, $a1, $s4		# y0 - y	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16			
+						
+		#	setPixel(x0 + y, y0 + x);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		add	$a0, $a0, $s4		# x0 + x	
+		add	$a1, $a1, $s3		# y0 + y	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16			
+						
+		#	setPixel(x0 - y, y0 + x);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		sub	$a0, $a0, $s4		# x0 - x	
+		add	$a1, $a1, $s3		# y0 + y	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16			
+						
+		#	setPixel(x0 + y, y0 - x);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		add	$a0, $a0, $s4		# x0 + x	
+		sub	$a1, $a1, $s3		# y0 - y	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16			
+						
+		#	setPixel(x0 - y, y0 - x);			
+		addiu	$sp, $sp, -16 			
+		sw	$a0, 12($sp)			
+		sw	$a1, 8($sp)			
+		sw	$a2, 4($sp)			
+		sw	$a3, ($sp)			
+		move 	$a2, $t9		# move the colour into a2 ready to set the pixel	
+		sub	$a0, $a0, $s4		# x0 - x	
+		sub	$a1, $a1, $s3		# y0 - y	
+		jal	setPixel			
+		nop				
+		nop				
+		lw	$a3, ($sp)			
+		lw	$a2, 4($sp)			
+		lw	$a1, 8($sp)			
+		lw	$a0, 12($sp)			
+		addiu	$sp, $sp, 16			
+						
+		j	circleLoop			
+		nop				
+						
+						
+						
+#	End this program				
+#	done:					
+#	      	li   	$v0, 10         	# Finally exit the program (Syscall function 10)		
+#	      	syscall	
