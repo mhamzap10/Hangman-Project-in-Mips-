@@ -397,3 +397,13 @@ drawFace:
 
 j hangmanExit
 #########################################################STEP 3 ENDS
+######################## STEP 4 starts #################################
+drawBody:				
+	#hangman body
+		li $a0, 118
+		li $a1, 90
+		li $a2, 118
+		li $a3, 140
+		jal drawLine
+j hangmanExit
+#########################################################STEP 4 ENDS
