@@ -257,3 +257,96 @@ recur:
 	li	$v0, 10
 	syscall
 ######################################### MAIN ENDS ############################################
+
+
+###### THIS FUNCTION GENERATES A RANDOM NUMBER AND RETURNS IT IN $a0 
+randomGenerator:
+	#$s7 contains the length of buffer - 10, Hence this function generates a random number used in selecting a state form buffer strinf
+	move $a1, $s7	#Range set from 0-44 in this case (total characters in buffer are 55 so it will generate random # from 0 to 44)
+	li $v0, 42	#generates random number and put it in $a0
+	syscall
+	jr $ra
+#####################################################################
+
+
+###### THIS FUNCTION IS FOR STORING A RANDOM SELECTED WORD FROM BUFFER INTO TESTWORD
+storeWord:
+	la $t1, testWord
+	addi $t0, $t0, 1
+	whileSW:
+	lb $t2, 0($t0)
+	beq $t2, 0x2a, exitStoreWord	#exit if reaches to the end of current word
+	beqz $t2, exitStoreWord		#eit of reached end of buffer string
+	sb $t2, 0($t1)
+	addi $t0, $t0, 1
+	addi $t1, $t1, 1
+	j whileSW
+	
+	exitStoreWord:
+	li $t3, 0x00
+	sb $t3, 0($t1)
+	jr $ra
+####################################################################################
+	
+
+###### THIS FUNCTION CALCULATES THE STRING LENGTH OF TESTWORD AND RETURNS IT IN $v0
+## Argument passed $a3, contains address of the string whose length is to calculate
+## Return value $v0, length of string
+strlen:
+	li $v0, 0
+	loopStrLen:
+	lb $t2, 0($a3)  # Load the first byte from address in $t0  
+	beqz $t2, endStrlen   # if $t2 == 0 then go to label end  
+	addi $a3, $a3, 1      # else increment the address  
+	addi $v0, $v0, 1 # and increment the counter of course  
+	j loopStrLen      # finally loop  
+
+	endStrlen:
+	jr $ra  
+###################################################################################
+
+
+###### THIS FUNCTION USED TO TAKE INPUR FROM THE USER #############################
+## return value, read character in $v0
+promptChar:
+	la $t3, charInputHistory	
+	move $a3, $t3			#going to call strlen, so storing address of string in $a3(argument for strlen function)
+	addi $sp, $sp, -4		#storing current $ra (i.e some line # of main), on stack
+	sw $ra, 0($sp)			#because going to call strlen, that will overwrite $ra
+	
+	jal strlen			#this will return the length of charInputHistory string into $v0
+	move $t0, $v0			#$t0 has length of charInputHistory
+	
+	promptCharLoop:			#if the char has already been input (present in history) then come here again
+		li $v0, 54
+		la $a0, charInputPrompt
+		la $a1, charInput
+		li $a2, 2
+		syscall
+		
+		la $t1, charInput
+		lb $t2, 0($t1)		#now $t2 has the user input character
+		#there is nothing in charInputHistory array	
+		beqz $t0, checkHistoryLoopExit
+		
+		#check whether $t2 has previously been inputed by running a loop on charInputHistory, $t0 times
+		checkHistoryLoop:
+			lb $t4, 0($t3)
+			beqz $t4, checkHistoryLoopExit	#have reached end of 'charInputHistory' string
+			beq $t4, $t2, promptCharLoop	#means user has previously inputed the same char and hence need to input again
+			addi $t3, $t3, 1
+			j checkHistoryLoop
+			
+			
+	checkHistoryLoopExit:
+#	addi $t3, $t3, 1	#store the new input in charInputHistory char array
+	sb $t2, 0($t3)
+	
+	lw $ra, 0($sp)			#restoring $ra from stack to get back to somewhere in main
+	addi $sp, $sp, 4
+	move $v0, $t2			#returns the read char in $v0
+	jr $ra
+###################################################################################
+
+
+###################################################################################
