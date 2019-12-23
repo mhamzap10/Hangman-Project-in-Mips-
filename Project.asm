@@ -355,3 +355,45 @@ drawRope:
 		jal 	dashLine
 j hangmanExit
 #########################################################STEP 2 ENDS
+drawFace:
+######################## STEP 3 starts #################################								
+#	# hangman face					
+		li	$t9, 0x00FFFFFF
+		#li	$t9, 0x00FFFF00			
+		li	$a0, 100			
+		li	$a1, 75			
+		li	$a3, 20			#radius
+		jal	drawCircle			
+		nop				
+		nop
+	#lefteye
+		li	$a0, 91			
+		li	$a1, 75			
+		li	$a3, 1			#radius
+		jal	drawCircle			
+		nop				
+		nop
+	#righteye
+		li	$a0, 105			
+		li	$a1, 65			
+		li	$a3, 1			#radius
+		jal	drawCircle			
+		nop				
+		nop	
+	#nose
+	#	li	$a0, 101
+	#	li	$a1, 76
+	#	li	$a2, 105
+	#	li	$a3, 80
+	#	jal	drawLine
+	#	nop
+	#	nop
+	#mouth
+		li	$a0, 100
+		li	$a1, 87
+		li	$a2, 111
+		li	$a3, 77
+		jal	drawLine
+
+j hangmanExit
+#########################################################STEP 3 ENDS
