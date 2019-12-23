@@ -407,3 +407,13 @@ drawBody:
 		jal drawLine
 j hangmanExit
 #########################################################STEP 4 ENDS
+######################## STEP 5 starts #################################		
+drawLeftHand:
+	#hangman left hand
+		li $a0, 118
+		li $a1, 90
+		li $a2, 100
+		li $a3, 120
+		jal drawLine
+j hangmanExit
+#########################################################STEP 5 ENDS
