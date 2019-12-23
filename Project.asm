@@ -333,3 +333,25 @@ drawWalls:
 		
 j hangmanExit
 #########################################################STEP 1 ENDS
+######################## STEP 2 starts #################################								
+#rope
+drawRope:																
+		li	$a0, 120			
+		li	$a1, 20			
+		li	$a2, 120			
+		li	$a3, 70			
+		jal 	dashLine			
+		nop				
+		nop
+		li	$a0, 121			
+		li	$a1, 20			
+		li	$a2, 121			
+		li	$a3, 70			
+		jal 	dashLine	
+		li	$a0, 122			
+		li	$a1, 20			
+		li	$a2, 122			
+		li	$a3, 70			
+		jal 	dashLine
+j hangmanExit
+#########################################################STEP 2 ENDS
