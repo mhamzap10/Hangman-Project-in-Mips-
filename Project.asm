@@ -257,3 +257,79 @@ recur:
 	li	$v0, 10
 	syscall
 ######################################### MAIN ENDS ############################################
+##################### STEP 1 starts #########################
+drawWalls:
+		li	$t9, 0x00FFFF00		#yellow
+#pillar1
+		li	$a0, 30			
+		li	$a1, 10			
+		li	$a2, 30			
+		li	$a3, 220			
+		jal 	drawLine			
+		nop				
+		nop
+#pillar2		
+		li	$a0, 40			
+		li	$a1, 20			
+		li	$a2, 40			
+		li	$a3, 220			
+		jal 	drawLine			
+		nop				
+		nop
+#knob 1		
+		li	$a0, 30			
+		li	$a1, 10			
+		li	$a2, 150			
+		li	$a3, 10			
+		jal 	drawLine			
+		nop				
+		nop							
+#knob 2		
+		li	$a0, 40			
+		li	$a1, 20			
+		li	$a2, 150			
+		li	$a3, 20			
+		jal 	drawLine			
+		nop				
+		nop
+#knob corner
+		li	$a0, 150			
+		li	$a1, 10			
+		li	$a2, 150			
+		li	$a3, 20			
+		jal 	drawLine			
+		nop				
+		nop
+		
+		li	$a0, 40
+		li	$a1, 60
+		li	$a2, 80
+		li	$a3, 20
+		jal	drawLine
+		
+		li	$a0, 40
+		li	$a1, 50
+		li	$a2, 70
+		li	$a3, 20
+		jal	drawLine
+		
+#base1
+		li	$a0, 10			
+		li	$a1, 220			
+		li	$a2, 200			
+		li	$a3, 220			
+		jal 	drawLine			
+		nop				
+		nop
+		
+#base2
+		li	$a0, 150			
+		li	$a1, 10			
+		li	$a2, 150			
+		li	$a3, 20			
+		jal 	drawLine			
+		nop				
+		nop	
+		
+j hangmanExit
+#########################################################STEP 1 ENDS
