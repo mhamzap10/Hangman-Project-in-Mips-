@@ -35,7 +35,7 @@ main:
 	li	$a2, 0
 	syscall
 	#########################################
-	
+
 	move	$s6, $v0	#save the file descriptor
 
 	#now read the file just opened and store all of its content into buffer
@@ -124,7 +124,7 @@ recur:
 		exitA:
 		li $t1, 0x0
 		sb $t1, 0($t0)
-			####################################################################################		
+	####################################################################################		
 	#print initial blank guessed string
 	li $v0, 55
 	la $a0, guessedString
@@ -258,6 +258,19 @@ recur:
 	syscall
 ######################################### MAIN ENDS ############################################
 
+
+printGuessedString:
+	li $v0, 55
+	li $a1, 1
+	la $a0, guessedString
+	syscall
+	
+	#li $v0, 56
+	#la $a0, errorPrompt
+	#move $a1, $t7
+	#syscall
+	
+	jr $ra
 
 ###### THIS FUNCTION GENERATES A RANDOM NUMBER AND RETURNS IT IN $a0 
 randomGenerator:
@@ -437,7 +450,6 @@ drawHangman:
 		#li	$t9, 0x00FF00FF		# Colour - Blue		
 		
 
-
 ##################### STEP 1 starts #########################
 drawWalls:
 		li	$t9, 0x00FFFF00		#yellow
@@ -514,6 +526,7 @@ drawWalls:
 		
 j hangmanExit
 #########################################################STEP 1 ENDS
+
 ######################## STEP 2 starts #################################								
 #rope
 drawRope:																
@@ -536,6 +549,7 @@ drawRope:
 		jal 	dashLine
 j hangmanExit
 #########################################################STEP 2 ENDS
+
 drawFace:
 ######################## STEP 3 starts #################################								
 #	# hangman face					
@@ -578,6 +592,7 @@ drawFace:
 
 j hangmanExit
 #########################################################STEP 3 ENDS
+							
 ######################## STEP 4 starts #################################
 drawBody:				
 	#hangman body
@@ -588,6 +603,7 @@ drawBody:
 		jal drawLine
 j hangmanExit
 #########################################################STEP 4 ENDS
+
 ######################## STEP 5 starts #################################		
 drawLeftHand:
 	#hangman left hand
@@ -598,6 +614,7 @@ drawLeftHand:
 		jal drawLine
 j hangmanExit
 #########################################################STEP 5 ENDS
+
 ######################## STEP 6 starts #################################
 drawRightHand:
 	#hangman right hand
@@ -608,6 +625,7 @@ drawRightHand:
 		jal drawLine
 j hangmanExit
 #########################################################STEP 6 ENDS
+
 ######################## STEP 7 starts #################################
 drawLeftLeg:	
 	#hangman left leg
@@ -618,6 +636,7 @@ drawLeftLeg:
 		jal drawLine
 j hangmanExit
 #########################################################STEP 7 ENDS
+
 ######################## STEP 8 starts #################################
 	#hangman right leg
 drawRightLeg:
@@ -628,6 +647,7 @@ drawRightLeg:
 		jal drawLine																						
 j hangmanExit
 #########################################################STEP 8 ENDS
+
 ####################### Hangman gonnna die ###################################
 	#HANGMAN Dies
 hangmanDies:
