@@ -437,3 +437,13 @@ drawLeftLeg:
 		jal drawLine
 j hangmanExit
 #########################################################STEP 7 ENDS
+######################## STEP 8 starts #################################
+	#hangman right leg
+drawRightLeg:
+		li $a0, 118
+		li $a1, 140
+		li $a2, 136
+		li $a3, 170
+		jal drawLine																						
+j hangmanExit
+#########################################################STEP 8 ENDS
